@@ -1,0 +1,42 @@
+# Default configuration for gene compression experiments
+# Override any field from the command line or by creating a region-specific config
+
+data:
+  region: "WMB-10Xv3-TH"
+  celltype_key: "subclass"          # class | subclass | supertype | cluster
+  n_hvg: 3000
+  max_cells: null                   # null = use all cells
+
+model:
+  selector_type: "concrete"         # concrete | stg
+  latent_dim: 64
+  encoder_dims: [256, 128]
+  decoder_dims: [128, 256]
+  dropout: 0.1
+
+training:
+  n_epochs: 150
+  batch_size: 512
+  lr: 1.0e-3
+  weight_decay: 1.0e-5
+  grad_clip: 1.0
+  early_stop_patience: 15
+  num_workers: 4
+  seed: 0
+
+loss:
+  lambda_recon: 1.0
+  lambda_ct: 0.5
+  lambda_neighbor: 0.0             # set >0 to add triplet loss (expensive)
+  lambda_stg: 0.01                 # only used when selector_type=stg
+
+temperature:
+  t_start: 1.0
+  t_min: 0.01
+  anneal_rate: 3.0e-4
+  anneal_every: 100
+
+experiment:
+  panel_sizes: [10, 25, 50, 100]
+  include_spapros: true
+  random_seeds: [0, 1, 2]
