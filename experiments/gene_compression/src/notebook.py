@@ -1,8 +1,7 @@
 """Notebook-friendly workflows for the gene compression experiment.
 
-These helpers wrap the command-line scripts in importable functions so a
-notebook can load MERFISH data, train learned panels, run baselines, evaluate
-results, and save outputs without shelling out to subprocesses.
+These helpers train learned panels, run baselines, evaluate results, and save
+outputs from an AnnData object that you already loaded in a notebook.
 """
 
 from __future__ import annotations
@@ -16,32 +15,11 @@ import pandas as pd
 import torch
 
 from .baselines.gene_selection import run_all_baselines
-from .data.abc_atlas import dataset_info, load_dataset, make_loaders
+from .data.abc_atlas import make_loaders
 from .evaluation.metrics import evaluate_panel
 from .models.autoencoder import build_model
 from .training.losses import CompressionLoss
 from .training.trainer import TemperatureScheduler, Trainer
-
-
-def load_merfish(
-    data_root: str | Path,
-    *,
-    celltype_key: str = "subclass",
-    brain_section: str | None = None,
-    max_cells: int | None = None,
-    seed: int = 0,
-):
-    """Load ABC MERFISH data for the 500-gene compression experiment."""
-    adata = load_dataset(
-        "MERFISH-C57BL6J-638850",
-        data_root=data_root,
-        celltype_key=celltype_key,
-        brain_section=brain_section,
-        max_cells=max_cells,
-        random_state=seed,
-    )
-    print(json.dumps(dataset_info(adata), indent=2))
-    return adata
 
 
 def get_device(device: str | None = None) -> str:
