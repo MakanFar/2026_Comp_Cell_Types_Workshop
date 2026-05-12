@@ -28,4 +28,4 @@ rich>=13.0
 # faiss-cpu>=1.7            # uncomment for large-scale kNN (GPU: faiss-gpu)
 
 # Spapros (install from local repo or PyPI)
-# spapros>=0.1.6            # uncomment or: pip install -e ../../
+spapros>=0.1.6            # uncomment or: pip install -e ../../

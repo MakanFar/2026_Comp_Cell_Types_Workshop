@@ -19,6 +19,7 @@ import os
 import sys
 from pathlib import Path
 
+import matplotlib.pyplot as plt
 import torch
 
 # ── Make src importable regardless of working directory ───────────────────────
@@ -46,6 +47,8 @@ def get_args() -> argparse.Namespace:
     p.add_argument("--n_hvg", type=int, default=3000)
     p.add_argument("--max_cells", type=int, default=None,
                    help="Subsample to this many cells (None = use all)")
+    p.add_argument("--brain_section", default=None,
+                   help="MERFISH only: restrict to one section, e.g. C57BL6J-638850.38")
 
     # Model
     p.add_argument("--n_selected", type=int, default=50,
@@ -119,6 +122,7 @@ def main() -> None:
         n_hvg=args.n_hvg,
         max_cells=args.max_cells,
         random_state=args.seed,
+        brain_section=args.brain_section,
     )
 
     info = dataset_info(adata)
@@ -130,10 +134,18 @@ def main() -> None:
     n_celltypes = len(adata.uns["celltypes"])
     print(f"n_genes={n_genes}  n_celltypes={n_celltypes}")
 
-    # Save var_names of HVGs for later gene retrieval
+    # Save input gene identifiers for later gene retrieval. For MERFISH this is
+    # the 500 real measured genes after blank codeword removal.
     hvg_names = adata.var_names[adata.var["highly_variable"]].tolist()
+    gene_symbols = (
+        adata.var["gene_symbol"].astype(str).to_dict()
+        if "gene_symbol" in adata.var.columns
+        else {gene: gene for gene in hvg_names}
+    )
     with open(save_dir / "hvg_names.json", "w") as f:
         json.dump(hvg_names, f)
+    with open(save_dir / "gene_symbols.json", "w") as f:
+        json.dump(gene_symbols, f, indent=2)
     with open(save_dir / "celltypes.json", "w") as f:
         json.dump(adata.uns["celltypes"], f)
     with open(save_dir / "args.json", "w") as f:
@@ -212,10 +224,13 @@ def main() -> None:
 
     # ── Extract selected genes ────────────────────────────────────────────────
     selected_genes = model.get_selected_genes(var_names=hvg_names)
+    selected_gene_symbols = [gene_symbols.get(gene, gene) for gene in selected_genes]
     print(f"\nSelected {len(selected_genes)} genes:")
     print(selected_genes)
     with open(save_dir / "selected_genes.json", "w") as f:
         json.dump(selected_genes, f, indent=2)
+    with open(save_dir / "selected_gene_symbols.json", "w") as f:
+        json.dump(selected_gene_symbols, f, indent=2)
 
     # ── Save training curves ──────────────────────────────────────────────────
     import pandas as pd

@@ -47,7 +47,7 @@ import torch
 
 sys.path.insert(0, str(Path(__file__).parent.parent))
 
-from src.data.abc_atlas import load_abc_atlas, make_loaders, AnnDataset
+from src.data.abc_atlas import load_dataset, AnnDataset
 from src.baselines.gene_selection import run_all_baselines
 from src.evaluation.metrics import compare_panels, evaluate_panel
 from src.visualization.plots import plot_panel_comparison, plot_umap_comparison
@@ -64,6 +64,8 @@ def get_args() -> argparse.Namespace:
     p.add_argument("--celltype_key", default="subclass")
     p.add_argument("--n_hvg", type=int, default=3000)
     p.add_argument("--max_cells", type=int, default=None)
+    p.add_argument("--brain_section", default=None,
+                   help="MERFISH only: restrict to one section, e.g. C57BL6J-638850.38")
     p.add_argument("--panel_sizes", type=int, nargs="+", default=[10, 25, 50, 100])
     p.add_argument("--save_dir", default=os.environ.get("RESULTS_DIR", "/results"))
     p.add_argument("--skip_train", action="store_true",
@@ -157,13 +159,14 @@ def main() -> None:
 
     # ── 1. Load data ──────────────────────────────────────────────────────────
     print("\n[1/5] Loading data ...")
-    adata = load_abc_atlas(
-        region=args.region,
+    adata = load_dataset(
+        name=args.region,
         data_root=args.data_root,
         celltype_key=args.celltype_key,
         n_hvg=args.n_hvg,
         max_cells=args.max_cells,
         random_state=args.seed,
+        brain_section=args.brain_section,
     )
 
     # ── 2. Baseline gene selections ───────────────────────────────────────────
@@ -200,6 +203,8 @@ def main() -> None:
             ]
             if args.max_cells:
                 cmd += ["--max_cells", str(args.max_cells)]
+            if args.brain_section:
+                cmd += ["--brain_section", args.brain_section]
             subprocess.run(cmd, check=True)
     else:
         print("\n[3/5] Skipping encoder training (--skip_train)")
